@@ -27,9 +27,12 @@ with open('data/2451-28115.csv') as f:
     fda_data = {row[12]: row[8] for row in reader if row[12]}
 
 for item in isawbib_json:
+    item['fda_present'] = 0
     if item['data']['archive'] == 'https://archive.nyu.edu/handle/2451/28115':
         if item['data']['archiveLocation'] in fda_data.keys():
             item['links']['alternate']['href'] = fda_data[item['data']['archiveLocation']]
+            item['fda_present'] = 1
+
 
 # Add citations
 cit = z.add_parameters(content='bib', style='https://raw.githubusercontent.com/diyclassics/isaw-bibliography/master/static/csl/mla-isawbib-author.csl', sort="dateModified")
@@ -181,6 +184,8 @@ def bib_by_author(author):
                 if author.lower() in authors.lower():
                     items.append(item)
         item['data']['citation_'] = item['data']['citation_auth']
+        if item['fda_present'] == 0:
+            item['data']['citation_'] = re.sub(r'NYU FDA Entry .+?\.','',item['data']['citation_'])
 
     count = len(items)
     items = _sort_zotero_date(items)

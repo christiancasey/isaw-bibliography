@@ -193,9 +193,14 @@ def bib_by_author(author):
             item['data']['citation_'] = re.sub(r'NYU FDA Entry .+?\.','',item['data']['citation_'])
         # Reduce dates to year only
         item['data']['date'] = simplify_date(item['data']['date'])
+
+    # Remove duplicates—to do: why are there duplicates?
+    # Cf. Method #2 https://www.geeksforgeeks.org/python-removing-duplicate-dicts-in-list/
+    items = [i for n, i in enumerate(items) if i not in items[n + 1:]]
+        
     count = len(items)
     items = _sort_zotero_date(items)
-    print([item['data']['date'] for item in items])
+    print([item['key'] for item in items])
     return render_template('isaw-bibliography.html', title='Author: %s' % author, items=items, count=count)
 
 

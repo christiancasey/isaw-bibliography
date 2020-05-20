@@ -39,6 +39,12 @@ cit = z.add_parameters(content='bib', style='https://raw.githubusercontent.com/d
 
 isawbib_cit = z.everything(z.top())
 
+# Helper function to reduce date info to four-digit year
+def simplify_date(date_string):
+    temp = date_string
+    temp = ''.join([s for s in temp if s.isdigit()]) # Remove any non digits
+    return (temp[:4]) # Limit to first four characters; sufficient? (What if there was numerical day/month/etc. info in field?)
+
 # Helper function to format citations
 def fix_citations_auth(cit):
     match = 'Bagnall, Roger S.'
@@ -173,7 +179,6 @@ def bib_by_year(year):
     items = _sort_zotero_date(items)
     return render_template('isaw-bibliography.html', title='Year: %s' % str(year), items=items, count=count)
 
-
 @app.route('/author/<author>')
 @app.route('/authors/<author>')
 def bib_by_author(author):
@@ -186,9 +191,11 @@ def bib_by_author(author):
         item['data']['citation_'] = item['data']['citation_auth']
         if item['fda_present'] == 0:
             item['data']['citation_'] = re.sub(r'NYU FDA Entry .+?\.','',item['data']['citation_'])
-
+        # Reduce dates to year only
+        item['data']['date'] = simplify_date(item['data']['date'])
     count = len(items)
     items = _sort_zotero_date(items)
+    print([item['data']['date'] for item in items])
     return render_template('isaw-bibliography.html', title='Author: %s' % author, items=items, count=count)
 
 

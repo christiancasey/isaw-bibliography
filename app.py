@@ -88,8 +88,9 @@ def fix_citations_auth(cit):
 
     bib = open + bib + withs + close
 
-    bib = bib.replace('https://archive.nyu.edu/handle/2451/28115,', 'NYU FDA Entry').replace('https://archive.nyu.edu/handle/2451/28115.', '')
 
+    bib = bib.replace('https://archive.nyu.edu/handle/2451/28115,', 'NYU FDA Entry').replace('https://archive.nyu.edu/handle/2451/28115.', '')
+    bib = re.sub(r'http://hdl.handle.net/(\d+)/(\d+)(\.*)', r'https://archive.nyu.edu/handle/\1/\2',bib)
     bib = re.sub(r'(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:;%_\+.~#?&//=]*))', '<a href=\'\g<1>\'>\g<1></a>', bib)
 
     return bib

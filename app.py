@@ -1,4 +1,3 @@
-
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -9,6 +8,13 @@ import re
 
 from flask import Flask, Markup, render_template, url_for
 from pyzotero import zotero
+
+
+
+# import os
+# from pyzotero import zotero
+# z = zotero.Zotero(os.getenv('LIBRARY_ID'), os.getenv('LIBRARY_TYPE'), os.getenv('API_KEY'))
+# isawbib_json = z.everything(z.top(sort="dateModified"))
 
 from collections import Counter
 
@@ -23,6 +29,8 @@ api_key = os.getenv('API_KEY')
 
 z = zotero.Zotero(library_id, library_type, api_key)
 isawbib_json = z.everything(z.top(sort="dateModified"))
+
+
 
 # Work with FDA-specific data for Bagnall works
 # Need to speed up—cache data???
@@ -91,8 +99,6 @@ def fix_citations_auth(cit):
     bib = re.sub(r'(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:;%_\+.~#?&//=]*))', '<a href=\'\g<1>\'>\g<1></a>', bib)
 
     return bib
-
-
 
 def fix_citations_main(cit):
     match = 'Bagnall, Roger S.'
@@ -183,6 +189,74 @@ def bib_by_year(year):
     items = _sort_zotero_date(items)
     return render_template('isaw-bibliography.html', title='Year: %s' % str(year), items=items, count=count)
 
+
+# Roger's custom view
+class NumberedItem:
+    def __init__(self,item_arg):
+        self.item = item_arg
+        
+        self.iItemNumber = -1
+        if len(self.item['data']['archiveLocation'][1:]) > 0:
+            sItemNumber = self.item['data']['archiveLocation'][1:]
+            sItemNumber = re.sub(r'\D','',sItemNumber)
+            self.iItemNumber = int(sItemNumber)
+            
+        self.item['data']['itemNumber'] = self.iItemNumber
+        
+    def __lt__(self,other):
+        return(self.iItemNumber<other.iItemNumber)
+        
+def render_bagnall_template(items, count):
+    
+    categories = []
+    with open('data/bagnall-codes.csv') as f:
+        reader = csv.reader(f)
+        # bagnall_codes = {row[0]: row[1] for row in reader}
+        # items_by_category = {row[0]: [] for row in reader}
+        for row in reader:
+            item_list = {'code': row[0], 'description': row[1], 'items': []}
+            categories.append(item_list)
+        
+    item_list = {'code': 'X', 'description': 'Uncategorized', 'items': []}
+    categories.append(item_list)
+    
+    for item in items:
+        
+        bAdded = False # If adding an item to a category fails, dump it into catchall below
+        
+        # If they have an archiveLocation value, use it to find the category
+        if len(item['data']['archiveLocation']) > 0:
+            iCatIndex = [iCatIndex for iCatIndex, cat in enumerate(categories) if cat['code'] == item['data']['archiveLocation'][0]]
+            if len(iCatIndex) > 0:
+                bAdded = True
+            else:
+                print(item['data']['archiveLocation'])
+            
+            # if len(item['data']['archiveLocation']) > 0:
+            #     sItemNumber = item['data']['archiveLocation'][1:]
+            #     sItemNumber = re.sub(r'\D','',sItemNumber)
+            #     iItemNumber = int(item['data']['archiveLocation'][1:])
+            #     print(iItemNumber)
+        
+        if not bAdded:
+            iCatIndex = [iCatIndex for iCatIndex, cat in enumerate(categories) if cat['code'] == 'X']
+            
+        categories[iCatIndex[0]]['items'].append(item)
+        
+    # Sort the items inside the categories using the NumberedItem object
+    for i in range(len(categories)):
+        
+        print('%s %i' % (categories[i]['code'], len(categories[i]['items'])))
+        
+        if len(categories[i]['items']) > 0:
+            numbered_items = [ NumberedItem(item) for item in categories[i]['items'] ]
+            numbered_items.sort()
+            categories[i]['items'] = [ ni.item for ni in numbered_items ]
+            
+        
+    return render_template('isaw-bibliography-bagnall.html', title='Author: bagnall', items=items, categories=categories, count=count)
+
+
 @app.route('/author/<author>')
 @app.route('/authors/<author>')
 def bib_by_author(author):
@@ -191,7 +265,10 @@ def bib_by_author(author):
         for creator in item['data']['creators']:
             for authors in creator.values():
                 if author.lower() in authors.lower():
-                    items.append(item)
+                    # Perhaps this will prevent the duplicates, see comment below
+                    if item not in items:
+                        items.append(item)
+        
         item['data']['citation_'] = item['data']['citation_auth']
         if item['fda_present'] == 0:
             item['data']['citation_'] = re.sub(r'NYU FDA Entry .+?\.','',item['data']['citation_'])
@@ -199,12 +276,16 @@ def bib_by_author(author):
         item['data']['date'] = simplify_date(item['data']['date'])
 
     # Remove duplicates—to do: why are there duplicates?
+    #   Possible solution: See above in the creator loop, multiple author tags might cause duplicate appends
     # Cf. Method #2 https://www.geeksforgeeks.org/python-removing-duplicate-dicts-in-list/
     items = [i for n, i in enumerate(items) if i not in items[n + 1:]]
-        
+    
     count = len(items)
     items = _sort_zotero_date(items)
-    print([item['key'] for item in items])
+    # print([item['key'] for item in items])
+    if author == 'bagnall':
+        return render_bagnall_template(items, count)
+    
     return render_template('isaw-bibliography.html', title='Author: %s' % author, items=items, count=count)
 
 

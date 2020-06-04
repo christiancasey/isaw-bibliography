@@ -247,7 +247,7 @@ def render_bagnall_template(items, count):
             numbered_items.sort()
             categories[i]['items'] = [ ni.item for ni in numbered_items ]
             
-    return render_template('isaw-bibliography.html', title='Author: %s' % author, items=items, count=count)
+    return render_template('isaw-bibliography.html', title='Author: bagnall', items=items, count=count)
     
     # return render_template('isaw-bibliography-bagnall.html', title='Author: bagnall', items=items, categories=categories, count=count)
 

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}
+{% if title %}
+    | {{ title }}
+{% endif %}
+{% endblock %}
+{% block content %}
+<h1>ISAW Bibliography - Roger Bagnall</h1>
+
+  <p>There are {{count}} items in this collection.</p>
+  
+  <h2><a name="toc">Categories</a></h2>
+  <div class="category_list">
+    <ul>
+    {% for category in categories %}
+      <li><a href="#category_{{category['code']}}">{{category['code']}}: {{category['description']}}</a></li>
+    {% endfor %}
+    </ul>
+  </div>
+  <br />
+
+  {% for category in categories %}
+    <div class="category">
+      <h2><a name="category_{{category['code']}}">{{category['code']}}: {{category['description']}}</a></h2>
+      {% for item in category['items'] %}
+          <div class="citation">
+            <b>{{item['data']['itemNumber']}}</b> {{item['data']['citation_'] | safe}} <a href="{{item['links']['alternate']['href']}}" target="_blank"><img src="{{ url_for('static', filename='icon_linkout.png') }}" height=12 width=12></a>
+          </div>
+      {% endfor %}
+      <br /><a href="#toc">Back to top</a><br /><br />
+    </div>
+    
+  {% endfor %}
+
+
+{% endblock %}

@@ -87,3 +87,8 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Work-in-Progress stuff for Roger
+bagnall-working/
+temp*
+

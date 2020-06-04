@@ -142,7 +142,9 @@ def get_zotero_data():
     z = zotero.Zotero(library_id, library_type, api_key)
     isawbib_json = z.everything(z.top(sort="dateModified"))
     # cit = z.add_parameters(content='bib', style='https://www.zotero.org/styles/transactions-of-the-american-philological-association', sort="dateModified")
-    cit = z.add_parameters(content='bib', style='mla', sort="dateModified")
+    # cit = z.add_parameters(content='bib', style='mla', sort="dateModified")
+    cit = z.add_parameters(content='bib', style='static/csl/mla-isawbib-author.csl', sort="dateModified")
+    
     isawbib_cit = z.everything(z.top())
 
     # More elegant way to write this?
@@ -252,6 +254,11 @@ def render_bagnall_template(items, count):
     
     return render_template('isaw-bibliography-bagnall.html', title='Author: bagnall', categories=categories, count=count)
 
+@app.route('/bib-style')
+def get_bib_style():
+    with open('static/csl/mla-isawbib-author.csl') as f:
+        return f.read()
+    return ''
 
 @app.route('/author/<author>')
 @app.route('/authors/<author>')

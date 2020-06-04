@@ -1,5 +1,5 @@
-from dotenv import load_dotenv
-load_dotenv()
+# from dotenv import load_dotenv
+# load_dotenv()
 
 import os
 
@@ -9,12 +9,6 @@ import re
 from flask import Flask, Markup, render_template, url_for
 from pyzotero import zotero
 
-
-
-# import os
-# from pyzotero import zotero
-# z = zotero.Zotero(os.getenv('LIBRARY_ID'), os.getenv('LIBRARY_TYPE'), os.getenv('API_KEY'))
-# isawbib_json = z.everything(z.top(sort="dateModified"))
 
 from collections import Counter
 
